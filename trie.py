@@ -36,7 +36,8 @@ class Trie:
     @staticmethod
     def char_to_index(ch) -> int:
         """
-        Converts the given character into an index (0-25) assuming lowercase 'a' to 'z'.
+        Converts the given character into an index (0-25) assuming lowercase 'a' to 'z',
+        and 0-9 to character into index (26-35).
         """
         if ch.isalpha():
             return ord(ch.lower()) - ord('a')
