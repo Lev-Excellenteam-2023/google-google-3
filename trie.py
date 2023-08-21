@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import List
+from typing import List, Union
 
 NUM_OF_CHARS = 36
 
@@ -12,9 +12,8 @@ class TrieNode:
     """
 
     def __init__(self):
-        self.children = [None] * NUM_OF_CHARS
-        self.word_location = []
-        # isEndOfWord is True if node represents the end of a word
+        self.children: List[Union[TrieNode, None]] = [None] * NUM_OF_CHARS
+        self.word_location: List[SentenceIndex] = []
         self.isEndOfWord = False
 
 
@@ -43,21 +42,33 @@ class Trie:
             return ord(ch.lower()) - ord('a')
         return ord(ch) - ord('0') + 26
 
+    @staticmethod
+    def index_to_char(index: int) -> chr:
+        """
+        Converts the given index into a char (0-25) assuming lowercase 'a' to 'z',
+        and 0-9 to character into index (26-35).
+        """
+        if index < 26:
+            return chr((ord('a') + index))
+        else:
+            return chr((ord('0') + index - 26))
+
     def insert(self, key: str, file_id: int, row_number: int, word_index: int) -> None:
         """
         Inserts a word into the Trie.
+
+        Args:
+            key (str): The word to be inserted.
+            file_id (int): The file id.
+            row_number (int): The word number of the row.
+            word_index (int): The word index in the sentence.
+
         Returns:
             None
-            :param key: key (str): The word to be inserted.
-            :param file_id: file_id(int) The file id
-            :param row_number: row_number(int) The word number of row
-            :param word_index: word_index(int) The word index in the sentence
         """
         pCrawl = self.root
-        length = len(key)
-        for level in range(length):
-            index = self.char_to_index(key[level])
-            # If the current character is not present
+        for level in key:
+            index = self.char_to_index(level)
             if not pCrawl.children[index]:
                 pCrawl.children[index] = self.get_node()
             pCrawl = pCrawl.children[index]
@@ -74,13 +85,91 @@ class Trie:
             key (str): The word to be searched.
 
         Returns:
-            bool: True if the word is found in the Trie, False otherwise.
+            List[SentenceIndex]: A list of SentenceIndex named-tuples representing the locations where the word is found.
         """
         pCrawl = self.root
-        length = len(key)
-        for level in range(length):
-            index = self.char_to_index(key[level])
+        for level in key:
+            index = self.char_to_index(level)
             if not pCrawl.children[index]:
                 return []
             pCrawl = pCrawl.children[index]
         return pCrawl.word_location
+
+    def search_from(self, node: TrieNode, word: str) -> Union[TrieNode, None]:
+        """
+        Traverses the Trie from a given node to find the TrieNode corresponding to the end of the given word.
+
+        Args:
+            node (TrieNode): The starting node to begin the traversal.
+            word (str): The word for which to find the corresponding node.
+
+        Returns:
+            TrieNode: The TrieNode corresponding to the end of the given word, or None if not found.
+        """
+        for level in word:
+            index = self.char_to_index(level)
+            if not node.children[index]:
+                return None
+            node = node.children[index]
+        return node
+
+    def add_letter(self, key: str, index: int) -> List[str]:
+        """
+        Adds a letter at a specific index in the given word and returns a list of valid words.
+
+        Args:
+            key (str): The word to which to add a letter.
+            index (int): The index at which to add the letter.
+
+        Returns:
+            List[str]: A list of valid words formed by adding a letter at the specified index.
+        """
+        if index >= len(key):
+            return []
+        words = []
+        pCrawl = self.search_from(self.root, key[:index])
+        for letter_index in range(NUM_OF_CHARS):
+            if pCrawl.children[letter_index]:
+                pCrawl_temp = pCrawl.children[letter_index]
+                pCrawl_temp = self.search_from(pCrawl_temp, key[index:])
+                if pCrawl_temp and pCrawl_temp.isEndOfWord:
+                    words.append(key[:index] + self.index_to_char(letter_index) + key[index:])
+        return words
+
+    def change_letter(self, key: str, index: int) -> List[str]:
+        """
+        Changes a letter at a specific index in the given word and returns a list of valid words.
+
+        Args:
+            key (str): The word in which to change a letter.
+            index (int): The index at which to change the letter.
+
+        Returns:
+            List[str]: A list of valid words formed by changing a letter at the specified index.
+        """
+        if index >= len(key):
+            return []
+        words = []
+        pCrawl = self.search_from(self.root, key[:index])
+        for letter_index in range(NUM_OF_CHARS):
+            if pCrawl.children[letter_index]:
+                pCrawl_temp = pCrawl.children[letter_index]
+                pCrawl_temp = self.search_from(pCrawl_temp, key[index + 1:])
+                if pCrawl_temp and pCrawl_temp.isEndOfWord:
+                    words.append(key[:index] + self.index_to_char(letter_index) + key[index + 1:])
+        return words
+
+    def remove_letter(self, key: str, index: int) -> List[SentenceIndex]:
+        """
+        Removes a letter at a specific index in the given word and returns a list of valid words.
+
+        Args:
+            key (str): The word from which to remove a letter.
+            index (int): The index at which to remove the letter.
+
+        Returns:
+            List[str]: A list of valid words formed by removing a letter at the specified index.
+        """
+        if index >= len(key):
+            return []
+        return self.search(key[:index] + key[index + 1:])
