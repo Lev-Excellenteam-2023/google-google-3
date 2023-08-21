@@ -1,7 +1,8 @@
-import pytest
-from search.search_completions import *
 from unittest.mock import Mock, patch
+
+import pytest
 from search.AutoCompleteData import AutoCompleteData, SentenceIndex
+from search.search_completions import *
 
 
 def test_compare_indexes():
@@ -28,7 +29,6 @@ def test_search_word():
     assert res[0] == SentenceIndex(1, 1, 0)
     assert res[1] == SentenceIndex(1, 1, 2)
     assert res[2] == SentenceIndex(1, 5, 3)
-
 
 
 def test_search_words():
