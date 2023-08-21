@@ -33,9 +33,16 @@ def test_search_word():
 
 def test_search_words():
     trie_tree_mock = Mock()
-    trie_tree_mock.search.return_value = [SentenceIndex(1, 1, 1), SentenceIndex(1, 1, 2), SentenceIndex(1, 5, 3)],
+    trie_tree_mock.search.return_value = [SentenceIndex(1, 1, 1), SentenceIndex(1, 1, 2), SentenceIndex(1, 5, 3)]
     res = search_words(['hello', 'world'], trie_tree_mock)
     print(res)
     assert len(res) == 1
     assert res[0] == SentenceIndex(1, 1, 1)
 
+
+def test_search():
+    trie_tree_mock = Mock()
+    trie_tree_mock.search.return_value = [SentenceIndex(1, 1, 1), SentenceIndex(1, 1, 2), SentenceIndex(1, 5, 3)]
+    res = search('hello world', trie_tree_mock)
+    assert len(res) == 1
+    assert res[0] == SentenceIndex(1, 1, 1)
