@@ -4,17 +4,17 @@ from search.AutoCompleteData import AutoCompleteData, SentenceIndex
 
 TrieTree = lambda: None
 
-def get_best_kֵ_completions(prefix: str,k:int =5) -> List[AutoCompleteData]:
+def get_best_kֵ_completions(prefix: str,trie_tree,k:int =5) -> List[AutoCompleteData]:
     """
     function to get the best k completions from the database.
     :param prefix: string of words that user input
     :param k: number of the best completions to return.
     :return: a list of AutoCompleteData objects
     """
-    sentences = search(prefix)[:k]
+    sentences = search(prefix,trie_tree)[:k]
     lst_of_auto_complete_data = [AutoCompleteData(sentence, len(prefix)) for sentence in sentences if sentence]
     if len(lst_of_auto_complete_data) < k:
-        lst_of_auto_complete_data += get_best_kֵ_completions(prefix[:-1], k - len(lst_of_auto_complete_data))
+        lst_of_auto_complete_data += get_best_kֵ_completions(prefix[:-1],trie_tree, k - len(lst_of_auto_complete_data))
     return lst_of_auto_complete_data
 
 
