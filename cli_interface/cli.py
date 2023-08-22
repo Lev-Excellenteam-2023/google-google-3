@@ -4,10 +4,10 @@ import sys
 from typing import List, Union
 
 import dotenv
-from read_to_trie import read_files
+from trie_db.read_to_trie import read_files
 from search.data_utils import AutoCompleteData
 from search.search_completions import get_best_k_completion
-from trie import Trie
+from trie_db.trie import Trie
 
 PATTERN = r'[^a-zA-Z0-9\s]'
 
@@ -36,7 +36,7 @@ def user_input():
     return string
 
 
-def init_db ( path_to_data: str ) -> (Trie, List[str]):
+def init_db(path_to_data: str) -> (Trie, List[str]):
     """
     Initialize the database with the data from the files and return the trie and the data list
     :return: trie tree of the words, data list of the files.
@@ -47,7 +47,7 @@ def init_db ( path_to_data: str ) -> (Trie, List[str]):
     return trie_tree, data_list
 
 
-def init ( path_to_data: str ):
+def init(path_to_data: str):
     """
     Initialize the search engine and return the trie and the data list.
     :return: trie tree of the words, data list of the files.

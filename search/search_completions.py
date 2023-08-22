@@ -1,12 +1,12 @@
+from collections import defaultdict
 from typing import List, Tuple
 
 from search.data_utils import AutoCompleteData, SentenceIndex
 from search.logic import find_sentence_by_indexes
-from trie import Trie
-from collections import defaultdict
+from trie_db.trie import Trie
 
 
-def get_best_k_completion ( prefix: str, trie_tree: Trie, data_list: List[str], k: int = 5 ) -> List[AutoCompleteData]:
+def get_best_k_completion(prefix: str, trie_tree: Trie, data_list: List[str], k: int = 5) -> List[AutoCompleteData]:
     """
     function to get the best k completions from the database.
     :param trie_tree:
@@ -107,8 +107,67 @@ def compare_indexes(indexes_of_first_word: List[SentenceIndex],
     return res
 
 
+# def find_closest_correction(word: str, score: int, trie_tree: Trie) -> set:
+#     """
+#     Find closest corrections for a given word based on a scoring system.
+#
+#     Args:
+#         word (str): The input word to find corrections for.
+#         score (int): The severity of the error in the word.
+#         trie_tree (Trie): The Trie data structure containing the dictionary.
+#
+#     Returns:
+#         set: A set of unique corrected words based on the given score.
+#     """
+#     optional_words = []
+#
+#     correction_functions = {
+#         1: lambda: [trie_tree.change_letter(word, index) for index in range(4, len(word))],
+#         2: lambda: [
+#                        trie_tree.remove_letter(word, index) or trie_tree.add_letter(word, index)
+#                        for index in range(4, len(word))
+#                    ] + [trie_tree.change_letter(word, 3) + trie_tree.add_letter(word, 4)] if len(word) >= 4 else [],
+#         3: lambda: [trie_tree.change_letter(word, 2)] if len(word) >= 3 else [],
+#         4: lambda: [
+#             trie_tree.remove_letter(word, 3),
+#             trie_tree.add_letter(word, 3),
+#             trie_tree.change_letter(word, 1)
+#         ] if len(word) >= 2 else [],
+#         5: lambda: [trie_tree.change_letter(word, 0)],
+#         6: lambda: [
+#             trie_tree.remove_letter(word, 2),
+#             trie_tree.add_letter(word, 2)
+#         ] if len(word) >= 3 else [],
+#         8: lambda: [
+#             trie_tree.remove_letter(word, 1),
+#             trie_tree.add_letter(word, 1)
+#         ] if len(word) >= 2 else [],
+#         10: lambda: [trie_tree.remove_letter(word, 0)] + [trie_tree.add_letter(word, 0)] if len(word) >= 2 else []
+#     }
+#
+#     if score in correction_functions:
+#         optional_words += correction_functions[score]()
+#
+#     uniq_words = set()
+#     for optional_word in optional_words:
+#         uniq_words = uniq_words.union(set(optional_word))
+#     return uniq_words
+
+
 def find_closest_correction(word: str, score: int, trie_tree: Trie):
+    """
+    Find the closest corrections for a given word based on a scoring system.
+
+    Args:
+        word (str): The input word to find corrections for.
+        score (int): The severity of the error in the word.
+        trie_tree (Trie): The Trie data structure containing the dictionary.
+
+    Returns:
+        set: A set of unique corrected words based on the given score.
+    """
     # word_indexes = []
+
     optional_words = []
     if score == 1:
         if len(word) >= 5:
@@ -127,6 +186,7 @@ def find_closest_correction(word: str, score: int, trie_tree: Trie):
                     optional_words.append(optional)
         if len(word) >= 4:
             optional = trie_tree.change_letter(word, 3)
+            optional += trie_tree.add_letter(word, 4)
             if optional:
                 optional_words.append(optional)
     elif score == 3:
@@ -137,6 +197,7 @@ def find_closest_correction(word: str, score: int, trie_tree: Trie):
     elif score == 4:
         if len(word) >= 4:
             optional_words.append(trie_tree.remove_letter(word, 3))
+        if len(word) >= 3:
             optional_words.append(trie_tree.add_letter(word, 3))
         if len(word) >= 2:
             optional_words.append(trie_tree.change_letter(word, 1))
@@ -145,13 +206,17 @@ def find_closest_correction(word: str, score: int, trie_tree: Trie):
     elif score == 6:
         if len(word) >= 3:
             optional_words.append(trie_tree.remove_letter(word, 2))
+        if len(word) >= 2:
             optional_words.append(trie_tree.add_letter(word, 2))
     elif score == 8:
         if len(word) >= 2:
             optional_words.append(trie_tree.remove_letter(word, 1))
+        if len(word) >= 1:
             optional_words.append(trie_tree.add_letter(word, 1))
     elif score == 10:
-        optional_words.append(trie_tree.remove_letter(word, 0))
+        if len(word) >= 2:
+            optional_words.append(trie_tree.remove_letter(word, 0))
+
         optional_words.append(trie_tree.add_letter(word, 0))
 
     # for optional_word in optional_words:
@@ -164,23 +229,37 @@ def find_closest_correction(word: str, score: int, trie_tree: Trie):
 
 
 def find_error_correction(prefix, sentences_indexes, trie_tree, k):
+    """
+    Find error corrections for a given prefix within sentences.
+
+    Args:
+        prefix (str): The input prefix to find error corrections for.
+        sentences_indexes (list): A list to store indexes of matching sentences.
+        trie_tree (Trie): The Trie data structure containing the dictionary.
+        k (int): Maximum number of sentences to retrieve.
+
+    Returns:
+        None: The `sentences_indexes` list is populated with indexes of matching sentences.
+    """
     split_prefix = prefix.split(" ")
+
     if len(split_prefix) == 1:
+        # Handle single-word prefix
         for score in range(1, 11):
             optional_words = find_closest_correction(prefix, score, trie_tree)
             for optional_word in optional_words:
-                sentences_indexes += (search(optional_word, trie_tree))
+                sentences_indexes += search(optional_word, trie_tree)
             if len(sentences_indexes) >= k:
                 return
     else:
-        correction_result = []
+        # Handle multi-word prefix
         for index in range(len(split_prefix)):
             optional_error_word = split_prefix[index]
             for score in range(1, 11):
                 optional_words = find_closest_correction(optional_error_word, score, trie_tree)
                 for optional_word in optional_words:
-                    optional_sentence = split_prefix
+                    optional_sentence = split_prefix.copy()  # Create a copy of the prefix
                     optional_sentence[index] = optional_word
-                    sentences_indexes += (search_words(optional_sentence, trie_tree))
+                    sentences_indexes.extend(search_words(optional_sentence, trie_tree))
                     if len(sentences_indexes) >= k:
                         return
