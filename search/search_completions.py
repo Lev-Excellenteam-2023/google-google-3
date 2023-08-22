@@ -2,6 +2,7 @@ from typing import List, Dict
 from trie import Trie
 from search.data_utils import AutoCompleteData, SentenceIndex
 from search.logic import find_sentence_by_indexes
+from trie import Trie
 from collections import defaultdict
 
 
@@ -14,14 +15,17 @@ def get_best_k_completion ( prefix: str, trie_tree: Trie, data_list: List[str], 
     :param k: number of the best completions to return.
     :return: a list of AutoCompleteData objects
     """
-    sentences_indexes = search(prefix, trie_tree)[:k]
+    sentences_indexes = search(prefix, trie_tree)
+    if len(sentences_indexes) < k:  # find error correction
+        find_error_correction(prefix, sentences_indexes, trie_tree, k - len(sentences_indexes))
+    sentences_indexes = sentences_indexes[:k]
     lst_of_auto_complete_data = [
         AutoCompleteData(sentence_index, find_sentence_by_indexes(sentence_index, data_list), len(prefix)) for
         sentence_index in sentences_indexes]
     return lst_of_auto_complete_data
 
 
-def search ( user_input: str, trie_tree, shift: int = 1 ) -> List[SentenceIndex]:
+def search(user_input: str, trie_tree, shift: int = 1) -> List[SentenceIndex]:
     """
     function to search_test the autocomplete sentences from the database.
     :param user_input: string of words that user input
@@ -44,7 +48,7 @@ def search_word ( word: str, trie_tree ) -> Dict[SentenceIndex,None]:
     return trie_tree.search(word)
 
 
-def search_words ( words: List[str], trie_tree, shift: int = 1 ) -> List[SentenceIndex]:
+def search_words(words: List[str], trie_tree, shift: int = 1) -> List[SentenceIndex]:
     """
     function to search_test the autocomplete sentences from the database.
     :param trie_tree:
@@ -53,9 +57,8 @@ def search_words ( words: List[str], trie_tree, shift: int = 1 ) -> List[Sentenc
     :return: a list of tuples of indexes of: (file_id, sentence_id, position)
     """
     indexes = [search_word(word, trie_tree) for word in words]
-    res = []
-    res += filter_by_indexes(indexes, shift)
-    return res
+    return filter_by_indexes(indexes, shift)
+
 
 
 def filter_by_indexes(indexes: List[Dict[SentenceIndex,None]], shift: int = 1) -> List[SentenceIndex]:
@@ -75,6 +78,7 @@ def filter_by_indexes(indexes: List[Dict[SentenceIndex,None]], shift: int = 1) -
 
 def compare_indexes ( indexes_of_first_word: Dict[SentenceIndex,None],
                       indexes_of_second_word: Dict[SentenceIndex,None], shift: int = 1 ) -> Dict[SentenceIndex,None]:
+
     """
     function to compare the indexes of two words.
     :param indexes_of_first_word: list of indexes of the first word.
@@ -95,11 +99,80 @@ def compare_indexes ( indexes_of_first_word: Dict[SentenceIndex,None],
     return res
 
 
-def find_word_completion ( word_start: str, trie_tree ) -> List[str]:
-    """
-    function to find the word completion.
-    :param trie_tree:
-    :param word_start: the start of the word.
-    :return: a list of tuples of indexes of: (file_id, sentence_id, position)
-    """
-    return trie_tree.search_prefix(word_start)
+def find_closest_correction(word: str, score: int, trie_tree: Trie):
+    # word_indexes = []
+    optional_words = []
+    if score == 1:
+        if len(word) >= 5:
+            for index in range(4, len(word)):
+                optional = trie_tree.change_letter(word, index)
+                if optional:
+                    optional_words.append(optional)
+    elif score == 2:
+        if len(word) >= 5:
+            for index in range(4, len(word)):
+                optional = trie_tree.remove_letter(word, index)
+                if optional:
+                    optional_words.append(optional)
+                optional = trie_tree.add_letter(word, index)
+                if optional:
+                    optional_words.append(optional)
+        if len(word) >= 4:
+            optional = trie_tree.change_letter(word, 3)
+            if optional:
+                optional_words.append(optional)
+    elif score == 3:
+        if len(word) >= 3:
+            optional = trie_tree.change_letter(word, 2)
+            if optional:
+                optional_words.append(optional)
+    elif score == 4:
+        if len(word) >= 4:
+            optional_words.append(trie_tree.remove_letter(word, 3))
+            optional_words.append(trie_tree.add_letter(word, 3))
+        if len(word) >= 2:
+            optional_words.append(trie_tree.change_letter(word, 1))
+    elif score == 5:
+        optional_words.append(trie_tree.change_letter(word, 0))
+    elif score == 6:
+        if len(word) >= 3:
+            optional_words.append(trie_tree.remove_letter(word, 2))
+            optional_words.append(trie_tree.add_letter(word, 2))
+    elif score == 8:
+        if len(word) >= 2:
+            optional_words.append(trie_tree.remove_letter(word, 1))
+            optional_words.append(trie_tree.add_letter(word, 1))
+    elif score == 10:
+        optional_words.append(trie_tree.remove_letter(word, 0))
+        optional_words.append(trie_tree.add_letter(word, 0))
+
+    # for optional_word in optional_words:
+    #    word_indexes.append(search(optional_word, trie_tree))
+    # return word_indexes
+    uniq_words = set()
+    for optional_word in optional_words:
+        uniq_words = uniq_words.union(set(optional_word))
+    return uniq_words
+
+
+def find_error_correction(prefix, sentences_indexes, trie_tree, k):
+    split_prefix = prefix.split(" ")
+    if len(split_prefix) == 1:
+        for score in range(1, 11):
+            optional_words = find_closest_correction(prefix, score, trie_tree)
+            for optional_word in optional_words:
+                sentences_indexes += (search(optional_word, trie_tree))
+            if len(sentences_indexes) >= k:
+                return
+    else:
+        correction_result = []
+        for index in range(len(split_prefix)):
+            optional_error_word = split_prefix[index]
+            for score in range(1, 11):
+                optional_words = find_closest_correction(optional_error_word, score, trie_tree)
+                for optional_word in optional_words:
+                    optional_sentence = split_prefix
+                    optional_sentence[index] = optional_word
+                    sentences_indexes += (search_words(optional_sentence, trie_tree))
+                    if len(sentences_indexes) >= k:
+                        return
