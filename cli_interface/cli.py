@@ -1,4 +1,5 @@
 import argparse
+import sys
 from typing import List, Union
 import dotenv
 
@@ -35,33 +36,36 @@ def user_input ():
     return string
 
 
-def init_db() -> (Trie, List):
+def init_db ( path_to_data: str ) -> (Trie, List[str]):
     """
     Initialize the database with the data from the files and return the trie and the data list
     :return: trie tree of the words, data list of the files.
     """
     trie_tree = Trie()
-    path_to_data = dotenv.get_key(dotenv.find_dotenv(), "PATH_TO_DATA")
     data_list = []
     read_files(trie_tree, path_to_data, data_list, 0)
     return trie_tree, data_list
 
 
-def init ():
+def init ( path_to_data: str ):
     """
     Initialize the search engine and return the trie and the data list.
     :return: trie tree of the words, data list of the files.
     """
     print("Welcome to the search engine!")
     print("Loading the database...")
-    trie_tree, data_list = init_db()
+    trie_tree, data_list = init_db(path_to_data)
     print("The search engine is ready to use!")
     return trie_tree, data_list
 
 
 def main ():
     parser = argparse.ArgumentParser(description="CLI interface for the project.")
-    trie_tree, data_list = init()
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+    else:
+        path = dotenv.get_key(dotenv.find_dotenv(), "PATH_TO_DATA")
+    trie_tree, data_list = init(path)
     print("This is a search engine for auto complete sentences.")
     print("Enter your text and get the best 5 auto complete sentences.")
     print("don't worry about spelling mistakes or lower/upper case, we will take care of it.")
