@@ -23,7 +23,6 @@ def input_validation(string: str) -> Union[str, None]:
         print("You didn't enter a text.")
         return None
     else:
-        print("You entered: " + clean_line)
         return clean_line
 
 
@@ -80,9 +79,7 @@ def main():
         else:
             res: List[AutoCompleteData] = get_best_k_completion(string, trie_tree, data_list, 5)
             for index in range(len(res)):
-                print(
-                    f"{index + 1}. {' '.join(res[index].completed_sentence)}. ({res[index].source_text},"
-                    f" {res[index].offset})")
+                print(f"{index + 1}. {res[index].completed_sentence}. ({res[index].source_text}, {res[index].offset})")
 
 
 if __name__ == "__main__":

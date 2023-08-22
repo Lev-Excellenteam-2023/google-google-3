@@ -1,8 +1,9 @@
 from collections import defaultdict
-from typing import List, Tuple
+from typing import List, Dict
 
 from search.data_utils import AutoCompleteData, SentenceIndex
 from search.logic import find_sentence_by_indexes
+from trie_db.trie import Trie
 from trie_db.trie import Trie
 
 
@@ -21,7 +22,7 @@ def get_best_k_completion(prefix: str, trie_tree: Trie, data_list: List[str], k:
     sentences_indexes = sentences_indexes[:k]
     lst_of_auto_complete_data = [
         AutoCompleteData(sentence_index, find_sentence_by_indexes(sentence_index, data_list), len(prefix)) for
-        sentence_index in sentences_indexes if sentence_index]
+        sentence_index in sentences_indexes]
     return lst_of_auto_complete_data
 
 
@@ -38,7 +39,7 @@ def search(user_input: str, trie_tree, shift: int = 1) -> List[SentenceIndex]:
     return indexes
 
 
-def search_word(word: str, trie_tree) -> List[SentenceIndex]:
+def search_word(word: str, trie_tree) -> Dict[SentenceIndex, None]:
     """
     function to search_test the autocomplete sentences from the database.
     :param trie_tree:
@@ -60,23 +61,23 @@ def search_words(words: List[str], trie_tree, shift: int = 1) -> List[SentenceIn
     return filter_by_indexes(indexes, shift)
 
 
-def filter_by_indexes(indexes: List[List[SentenceIndex]], shift: int = 1) -> List[SentenceIndex]:
+def filter_by_indexes(indexes: List[Dict[SentenceIndex, None]], shift: int = 1) -> List[SentenceIndex]:
     """
     function to filter the autocomplete sentences by indexes.
     :param indexes: list of lists of indexes of: (file_id, sentence_id, position)
     :param shift: the shift between the words. (for finding the words in a sentence with a gap between them)
     :return: a list of tuples of indexes of: (file_id, sentence_id, position)
     """
-    res = indexes[0]
+    dictionary_of_indexes = indexes[0]
     if len(indexes) == 1:
-        return res
+        return [key for key in dictionary_of_indexes]
     for i in range(1, len(indexes)):
-        res = compare_indexes(res, indexes[i], shift + i - 1)
-    return res
+        dictionary_of_indexes = compare_indexes(dictionary_of_indexes, indexes[i], shift + i - 1)
+    return [key for key in dictionary_of_indexes]
 
 
-def compare_indexes(indexes_of_first_word: List[SentenceIndex],
-                    indexes_of_second_word: List[SentenceIndex], shift: int = 1) -> List[SentenceIndex]:
+def compare_indexes(indexes_of_first_word: Dict[SentenceIndex, None],
+                    indexes_of_second_word: Dict[SentenceIndex, None], shift: int = 1) -> Dict[SentenceIndex, None]:
     """
     function to compare the indexes of two words.
     :param indexes_of_first_word: list of indexes of the first word.
@@ -86,24 +87,14 @@ def compare_indexes(indexes_of_first_word: List[SentenceIndex],
     """
     # this is a refactor of the code to improve the run time.
     # by using a dictionary to group the indexes by the file_id and sentence_id. of the second word.
-    grouped_indexes = defaultdict(list)
-    for index in indexes_of_second_word:
-        grouped_indexes[(index.file_id, index.sentence_id)].append(index.position)
-
-    res = []
+    res = {}
     # now i only need to iterate over the indexes of the first word.
     # (the first word is the one that has less indexes because it is usally already was comaperaed to all the other
     # words above it in the sentence)
     for index in indexes_of_first_word:
-        if (index.file_id, index.sentence_id) in grouped_indexes:
-            second_word_positions = grouped_indexes[(index.file_id, index.sentence_id)]
-            for position in second_word_positions:
-                second_word_position = position - shift
-                if index.position == second_word_position:
-                    res.append(index)
-                elif index.position < second_word_position:
-                    break
-
+        second_word_position = index.position + shift
+        if (index.file_id, index.sentence_id, second_word_position) in indexes_of_second_word:
+            res.update({index: None})
     return res
 
 
