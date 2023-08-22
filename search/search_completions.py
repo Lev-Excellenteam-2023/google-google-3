@@ -72,8 +72,8 @@ def filter_by_indexes ( indexes: List[List[SentenceIndex]], shift: int = 1 ) -> 
     res = indexes[0]
     if len(indexes) == 1:
         return res
-    for index in indexes[1:]:
-        res = compare_indexes(res, index, shift)
+    for i in range(1, len(indexes)):
+        res = compare_indexes(res, indexes[i], shift + i - 1)
     return res
 
 
