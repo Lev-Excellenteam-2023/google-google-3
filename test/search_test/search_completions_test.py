@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from search.AutoCompleteData import AutoCompleteData, SentenceIndex
+from search.data_utils import AutoCompleteData, SentenceIndex
 from search.search_completions import *
 
 

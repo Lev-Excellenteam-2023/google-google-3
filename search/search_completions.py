@@ -1,26 +1,26 @@
 from typing import List, Tuple
+from trie import Trie
+from search.data_utils import AutoCompleteData, SentenceIndex
+from search.logic import find_sentence_by_indexes
 
-from search.AutoCompleteData import AutoCompleteData, SentenceIndex
 
-TrieTree = lambda: None
-
-
-def get_best_k_completion(prefix: str, trie_tree, k: int = 5) -> List[AutoCompleteData]:
+def get_best_k_completion(prefix: str, trie_tree: Trie, data_list: List[str], k: int = 5) -> List[AutoCompleteData]:
     """
     function to get the best k completions from the database.
     :param trie_tree:
     :param prefix: string of words that user input
+    :param data_list: list of the sentences.
     :param k: number of the best completions to return.
     :return: a list of AutoCompleteData objects
     """
-    sentences = search(prefix, trie_tree)[:k]
-    lst_of_auto_complete_data = [AutoCompleteData(sentence, len(prefix)) for sentence in sentences if sentence]
-    if len(lst_of_auto_complete_data) < k:
-        lst_of_auto_complete_data += get_best_kֵ_completions(prefix[:-1], trie_tree, k - len(lst_of_auto_complete_data))
+    sentences_indexes = search(prefix, trie_tree)[:k]
+    lst_of_auto_complete_data = [
+        AutoCompleteData(sentence_index, find_sentence_by_indexes(sentence_index, data_list), len(prefix)) for
+        sentence_index in sentences_indexes if sentence_index]
     return lst_of_auto_complete_data
 
 
-def search(user_input: str, trie_tree, shift: int = 1) -> List[SentenceIndex]:
+def search ( user_input: str, trie_tree, shift: int = 1 ) -> List[SentenceIndex]:
     """
     function to search_test the autocomplete sentences from the database.
     :param user_input: string of words that user input
@@ -33,7 +33,7 @@ def search(user_input: str, trie_tree, shift: int = 1) -> List[SentenceIndex]:
     return indexes
 
 
-def search_word(word: str, trie_tree) -> List[SentenceIndex]:
+def search_word ( word: str, trie_tree ) -> List[SentenceIndex]:
     """
     function to search_test the autocomplete sentences from the database.
     :param trie_tree:
@@ -43,7 +43,7 @@ def search_word(word: str, trie_tree) -> List[SentenceIndex]:
     return trie_tree.search(word)
 
 
-def search_words(words: List[str], trie_tree, shift: int = 1) -> List[SentenceIndex]:
+def search_words ( words: List[str], trie_tree, shift: int = 1 ) -> List[SentenceIndex]:
     """
     function to search_test the autocomplete sentences from the database.
     :param trie_tree:
@@ -62,7 +62,7 @@ def search_words(words: List[str], trie_tree, shift: int = 1) -> List[SentenceIn
     return res
 
 
-def filter_by_indexes(indexes: List[List[SentenceIndex]], shift: int = 1) -> List[SentenceIndex]:
+def filter_by_indexes ( indexes: List[List[SentenceIndex]], shift: int = 1 ) -> List[SentenceIndex]:
     """
     function to filter the autocomplete sentences by indexes.
     :param indexes: list of lists of indexes of: (file_id, sentence_id, position)
@@ -77,8 +77,8 @@ def filter_by_indexes(indexes: List[List[SentenceIndex]], shift: int = 1) -> Lis
     return res
 
 
-def compare_indexes(indexes_of_first_word: List[SentenceIndex],
-                    indexes_of_second_word: List[SentenceIndex], shift: int = 1) -> List[SentenceIndex]:
+def compare_indexes ( indexes_of_first_word: List[SentenceIndex],
+                      indexes_of_second_word: List[SentenceIndex], shift: int = 1 ) -> List[SentenceIndex]:
     """
     function to compare the indexes of the first word to the indexes of the second word.
     :param indexes_of_first_word: list of indexes of the first word.
@@ -92,7 +92,7 @@ def compare_indexes(indexes_of_first_word: List[SentenceIndex],
             index.position == index2.position - shift]
 
 
-def find_word_completion(word_start: str, trie_tree) -> List[str]:
+def find_word_completion ( word_start: str, trie_tree ) -> List[str]:
     """
     function to find the word completion.
     :param trie_tree:
