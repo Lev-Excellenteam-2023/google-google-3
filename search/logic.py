@@ -12,11 +12,5 @@ def find_sentence_by_indexes(indexes: SentenceIndex, data_list: List[str]) -> st
     return data_list[indexes.file_id][indexes.sentence_id]
 
 
-def get_file_name(file_id: int) -> str:
-    """
-    function to get the file name by the file id.
-    :param file_id: the file id.
-    :return: the file name.
-    """
-    return f"input\\{file_id}.txt"
+
 
