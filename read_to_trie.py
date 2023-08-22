@@ -13,14 +13,12 @@ def store_file_data(trie: Trie, file_path: str, file_index: int):
         line_number = 0
         for line in file:
             clean_line = re.sub(pattern, '', line).lower().strip()
-            words_list = []
             if clean_line == '' or clean_line == '\n' or clean_line == ' ':
                 continue
             for word_number, word in enumerate(clean_line.split(), start=0):
                 trie.insert(word, file_index, line_number, word_number)
-                words_list.append(word)
-            if len(words_list) > 0:
-                line_list.append(words_list)
+            if len(clean_line) > 0:
+                line_list.append(line)
                 line_number += 1
         return line_list
 

@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import List, Union
+from typing import List, Union, Dict
 
 NUM_OF_CHARS = 36
 
@@ -13,7 +13,7 @@ class TrieNode:
 
     def __init__(self):
         self.children: List[Union[TrieNode, None]] = [None] * NUM_OF_CHARS
-        self.word_location: List[SentenceIndex] = []
+        self.word_location: Dict[SentenceIndex,None] = {}
         self.isEndOfWord = False
 
 
@@ -74,10 +74,11 @@ class Trie:
             p_crawl = p_crawl.children[index]
 
         # Mark the last node as the end of the word
-        p_crawl.word_location.append(SentenceIndex(file_id, row_number, word_index))
+        p_crawl.word_location[SentenceIndex(file_id, row_number, word_index)] = None
         p_crawl.isEndOfWord = True
 
-    def search(self, key: str) -> List[SentenceIndex]:
+
+    def search(self, key: str) -> Dict[SentenceIndex,None]:
         """
         Searches for a word in the Trie.
 
@@ -92,7 +93,7 @@ class Trie:
         for level in key:
             index = self.char_to_index(level)
             if not p_crawl.children[index]:
-                return []
+                return {}
             p_crawl = p_crawl.children[index]
         return p_crawl.word_location
 
