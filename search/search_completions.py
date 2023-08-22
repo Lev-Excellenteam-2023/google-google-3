@@ -2,9 +2,10 @@ from typing import List, Tuple
 from trie import Trie
 from search.data_utils import AutoCompleteData, SentenceIndex
 from search.logic import find_sentence_by_indexes
+from collections import defaultdict
 
 
-def get_best_k_completion(prefix: str, trie_tree: Trie, data_list: List[str], k: int = 5) -> List[AutoCompleteData]:
+def get_best_k_completion ( prefix: str, trie_tree: Trie, data_list: List[str], k: int = 5 ) -> List[AutoCompleteData]:
     """
     function to get the best k completions from the database.
     :param trie_tree:
@@ -80,16 +81,33 @@ def filter_by_indexes ( indexes: List[List[SentenceIndex]], shift: int = 1 ) -> 
 def compare_indexes ( indexes_of_first_word: List[SentenceIndex],
                       indexes_of_second_word: List[SentenceIndex], shift: int = 1 ) -> List[SentenceIndex]:
     """
-    function to compare the indexes of the first word to the indexes of the second word.
+    function to compare the indexes of two words.
     :param indexes_of_first_word: list of indexes of the first word.
     :param indexes_of_second_word: list of indexes of the second word.
-    :param shift: the shift between the words.
+    :param shift: the shift between the words. (for finding the words in a sentence with a gap between them)
     :return: a list of tuples of indexes of: (file_id, sentence_id, position)
     """
-    # check if the words are in the same file and sentence and the second word is after the first word.
-    return [index for index in indexes_of_first_word for index2 in indexes_of_second_word if
-            index.file_id == index2.file_id and index.sentence_id == index2.sentence_id and
-            index.position == index2.position - shift]
+    # this is a refactor of the code to improve the run time.
+    # by using a dictionary to group the indexes by the file_id and sentence_id. of the second word.
+    grouped_indexes = defaultdict(list)
+    for index in indexes_of_second_word:
+        grouped_indexes[(index.file_id, index.sentence_id)].append(index.position)
+
+    res = []
+    # now i only need to iterate over the indexes of the first word.
+    # (the first word is the one that has less indexes because it is usally already was comaperaed to all the other
+    # words above it in the sentence)
+    for index in indexes_of_first_word:
+        if (index.file_id, index.sentence_id) in grouped_indexes:
+            second_word_positions = grouped_indexes[(index.file_id, index.sentence_id)]
+            for position in second_word_positions:
+                second_word_position = position - shift
+                if index.position == second_word_position:
+                    res.append(index)
+                elif index.position < second_word_position:
+                    break
+
+    return res
 
 
 def find_word_completion ( word_start: str, trie_tree ) -> List[str]:
