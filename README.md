@@ -6,10 +6,10 @@
 
 1. **TrieNode**: Each node in the Trie represents a character in a word. It contains the following attributes:
    - `children`: An array of child nodes, indexed by character.
-   - `wordLocation`: A list of `namedtuple('SentenceIndex', ['file_id', 'sentence_id', 'position'])` if the node represents the end of a sentence.
-   - `isEndOfSentence`: Indicates if the node represents the end of a sentence.
+   - `wordLocation`: A list of `namedtuple('SentenceIndex', ['file_id', 'sentence_id', 'position'])` if the node represents the end of a word.
+   - `isEndOfWord`: Indicates if the node represents the end of a word.
 
-2. **Trie**: The main Trie data structure contains a root node. It includes methods for insertion, search, sentence completion, and correction.
+2. **Trie**: The main Trie data structure contains a root node. It includes methods for insertion, search, latter completion, and correction.
 
 ### Algorithms:
 
