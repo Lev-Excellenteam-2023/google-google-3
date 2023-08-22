@@ -66,16 +66,16 @@ class Trie:
         Returns:
             None
         """
-        pCrawl = self.root
+        p_crawl = self.root
         for level in key:
             index = self.char_to_index(level)
-            if not pCrawl.children[index]:
-                pCrawl.children[index] = self.get_node()
-            pCrawl = pCrawl.children[index]
+            if not p_crawl.children[index]:
+                p_crawl.children[index] = self.get_node()
+            p_crawl = p_crawl.children[index]
 
         # Mark the last node as the end of the word
-        pCrawl.word_location.append(SentenceIndex(file_id, row_number, word_index))
-        pCrawl.isEndOfWord = True
+        p_crawl.word_location.append(SentenceIndex(file_id, row_number, word_index))
+        p_crawl.isEndOfWord = True
 
     def search(self, key: str) -> List[SentenceIndex]:
         """
@@ -85,15 +85,16 @@ class Trie:
             key (str): The word to be searched.
 
         Returns:
-            List[SentenceIndex]: A list of SentenceIndex named-tuples representing the locations where the word is found.
+            List[SentenceIndex]: A list of SentenceIndex named-tuples representing
+            the locations where the word is found.
         """
-        pCrawl = self.root
+        p_crawl = self.root
         for level in key:
             index = self.char_to_index(level)
-            if not pCrawl.children[index]:
+            if not p_crawl.children[index]:
                 return []
-            pCrawl = pCrawl.children[index]
-        return pCrawl.word_location
+            p_crawl = p_crawl.children[index]
+        return p_crawl.word_location
 
     def search_from(self, node: TrieNode, word: str) -> Union[TrieNode, None]:
         """
@@ -127,12 +128,12 @@ class Trie:
         if index >= len(key):
             return []
         words = []
-        pCrawl = self.search_from(self.root, key[:index])
+        p_crawl = self.search_from(self.root, key[:index])
         for letter_index in range(NUM_OF_CHARS):
-            if pCrawl.children[letter_index]:
-                pCrawl_temp = pCrawl.children[letter_index]
-                pCrawl_temp = self.search_from(pCrawl_temp, key[index:])
-                if pCrawl_temp and pCrawl_temp.isEndOfWord:
+            if p_crawl and p_crawl.children[letter_index]:
+                p_crawl_temp = p_crawl.children[letter_index]
+                p_crawl_temp = self.search_from(p_crawl_temp, key[index:])
+                if p_crawl_temp and p_crawl_temp.isEndOfWord:
                     words.append(key[:index] + self.index_to_char(letter_index) + key[index:])
         return words
 
@@ -150,16 +151,18 @@ class Trie:
         if index >= len(key):
             return []
         words = []
-        pCrawl = self.search_from(self.root, key[:index])
+        p_crawl = self.search_from(self.root, key[:index])
         for letter_index in range(NUM_OF_CHARS):
-            if pCrawl.children[letter_index]:
-                pCrawl_temp = pCrawl.children[letter_index]
-                pCrawl_temp = self.search_from(pCrawl_temp, key[index + 1:])
-                if pCrawl_temp and pCrawl_temp.isEndOfWord:
+            if letter_index == self.char_to_index(key[index]):
+                continue
+            if p_crawl and p_crawl.children[letter_index]:
+                p_crawl_temp = p_crawl.children[letter_index]
+                p_crawl_temp = self.search_from(p_crawl_temp, key[index + 1:])
+                if p_crawl_temp and p_crawl_temp.isEndOfWord:
                     words.append(key[:index] + self.index_to_char(letter_index) + key[index + 1:])
         return words
 
-    def remove_letter(self, key: str, index: int) -> List[SentenceIndex]:
+    def remove_letter(self, key: str, index: int) -> List[str]:
         """
         Removes a letter at a specific index in the given word and returns a list of valid words.
 
@@ -172,4 +175,6 @@ class Trie:
         """
         if index >= len(key):
             return []
-        return self.search(key[:index] + key[index + 1:])
+        if self.search(key[:index] + key[index + 1:]):
+            return [key[:index] + key[index + 1:]]
+        return []

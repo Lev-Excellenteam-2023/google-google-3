@@ -1,17 +1,17 @@
 import argparse
-from typing import List, Union
-import dotenv
-
-from trie import Trie
-from read_to_trie import read_files
-from search.search_completions import get_best_k_completion
-from search.data_utils import AutoCompleteData
 import re
+from typing import List, Union
+
+import dotenv
+from read_to_trie import read_files
+from search.data_utils import AutoCompleteData
+from search.search_completions import get_best_k_completion
+from trie import Trie
 
 PATTERN = r'[^a-zA-Z0-9\s]'
 
 
-def input_validation ( string: str ) -> Union[str, None]:
+def input_validation(string: str) -> Union[str, None]:
     """
     Validate the user input.
     :param string: the user input.
@@ -26,7 +26,7 @@ def input_validation ( string: str ) -> Union[str, None]:
         return clean_line
 
 
-def user_input ():
+def user_input():
     """
     Get the user input.
     :return: the user input.
@@ -47,7 +47,7 @@ def init_db() -> (Trie, List):
     return trie_tree, data_list
 
 
-def init ():
+def init():
     """
     Initialize the search engine and return the trie and the data list.
     :return: trie tree of the words, data list of the files.
@@ -59,7 +59,7 @@ def init ():
     return trie_tree, data_list
 
 
-def main ():
+def main():
     parser = argparse.ArgumentParser(description="CLI interface for the project.")
     trie_tree, data_list = init()
     print("This is a search engine for auto complete sentences.")
@@ -77,7 +77,8 @@ def main ():
             res: List[AutoCompleteData] = get_best_k_completion(string, trie_tree, data_list, 5)
             for index in range(len(res)):
                 print(
-                    f"{index + 1}. {' '.join(res[index].completed_sentence)}. ({res[index].source_text}, {res[index].offset})")
+                    f"{index + 1}. {' '.join(res[index].completed_sentence)}. ({res[index].source_text},"
+                    f" {res[index].offset})")
 
 
 if __name__ == "__main__":
