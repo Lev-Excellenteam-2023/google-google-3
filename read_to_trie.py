@@ -1,5 +1,6 @@
 from trie import Trie
 from typing import List
+import sys
 import os
 import re
 
@@ -58,3 +59,7 @@ def read_files(trie: Trie, dir_path: str, arr: List, file_index: int = 0) -> int
 #         read_files(trie_s, sys.argv[1], data_list,  0)
 #         print(trie_s.search("python"))
 #         print(data_list[808][2755][1])
+#         print(trie_s.add_letter("pyhon", 2))
+#         print(trie_s.change_letter("pyxhon", 2))
+#         print(trie_s.change_letter("oython", 0))
+#         print(trie_s.add_letter("ython", 0))
