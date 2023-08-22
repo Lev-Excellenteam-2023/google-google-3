@@ -165,14 +165,13 @@ def find_error_correction(prefix, sentences_indexes, trie_tree, k):
             if len(sentences_indexes) >= k:
                 return
     else:
-        correction_result = []
         for index in range(len(split_prefix)):
             optional_error_word = split_prefix[index]
             for score in range(1, 11):
                 optional_words = find_closest_correction(optional_error_word, score, trie_tree)
                 for optional_word in optional_words:
-                    optional_sentence = split_prefix
+                    optional_sentence = split_prefix.copy()  # Create a copy of the prefix
                     optional_sentence[index] = optional_word
-                    sentences_indexes += (search_words(optional_sentence, trie_tree))
+                    sentences_indexes.extend(search_words(optional_sentence, trie_tree))
                     if len(sentences_indexes) >= k:
                         return
