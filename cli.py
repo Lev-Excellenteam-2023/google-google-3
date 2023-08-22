@@ -81,7 +81,7 @@ def main ():
             res: List[AutoCompleteData] = get_best_k_completion(string, trie_tree, data_list, 5)
             for index in range(len(res)):
                 print(
-                    f"{index + 1}. {' '.join(res[index].completed_sentence)}. ({res[index].source_text}, {res[index].offset})")
+                    f"{index + 1}. {res[index].completed_sentence}. ({res[index].source_text}, {res[index].offset})")
 
 
 if __name__ == "__main__":
